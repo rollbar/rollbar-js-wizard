@@ -1,0 +1,56 @@
+{
+  "name": "@rollbar/wizard",
+  "version": "1.0.0",
+  "description": "Automated setup wizard for Rollbar Next.js integration",
+  "main": "index.js",
+  "bin": {
+    "rollbar-wizard": "./bin/rollbar-wizard.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "test": "vitest",
+    "lint": "eslint . --ext .ts,.js",
+    "format": "prettier --write ."
+  },
+  "keywords": [
+    "rollbar",
+    "nextjs",
+    "error-tracking",
+    "wizard",
+    "setup",
+    "svelte"
+  ],
+  "author": "Rollbar",
+  "license": "MIT",
+  "dependencies": {
+    "@clack/prompts": "^0.7.0",
+    "chalk": "^4.1.2",
+    "commander": "^9.4.1",
+    "fs-extra": "^11.1.1",
+    "ora": "^6.3.1",
+    "prompts": "^2.4.2"
+  },
+  "devDependencies": {
+    "@types/fs-extra": "^11.0.1",
+    "@types/node": "^18.17.0",
+    "@types/prompts": "^2.4.4",
+    "@typescript-eslint/eslint-plugin": "^6.2.0",
+    "@typescript-eslint/parser": "^6.2.0",
+    "eslint": "^8.45.0",
+    "prettier": "^3.0.0",
+    "typescript": "^5.1.6",
+    "vitest": "^0.34.1"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/rollbar/rollbar-wizard.git"
+  },
+  "bugs": {
+    "url": "https://github.com/rollbar/rollbar-wizard/issues"
+  },
+  "homepage": "https://github.com/rollbar/rollbar-wizard#readme"
+} 

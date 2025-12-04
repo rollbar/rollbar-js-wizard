@@ -124,35 +124,6 @@ The wizard will:
 
 ---
 
-### Non-Interactive Usage
-
-For CI or scripted setups, you can run the wizard in **non-interactive** mode with `--yes` and environment variables:
-
-```bash
-cd my-nextjs-app
-ROLLBAR_PROJECT_ACCESS_SERVER_TOKEN=post_server_item_... \
-NEXT_PUBLIC_ROLLBAR_PROJECT_ACCESS_CLIENT_TOKEN=post_client_item_... \
-ROLLBAR_CODE_VERSION=$(git rev-parse HEAD) \
-rollbar-wizard nextjs \
-  --yes \
-  --environment production
-```
-
-Supported CLI options (subset):
-
-- **`--access-token`**: Server token (used in non-interactive mode if env isn’t set).
-- **`--environment`**: Environment name (default: `production`).
-- **`--skip-install`**: Skip installing npm dependencies in the target project.
-- **`--yes`**: Run in non-interactive mode using env vars and defaults.
-
-When `--yes` is provided, the wizard will:
-
-- Use `ROLLBAR_PROJECT_ACCESS_SERVER_TOKEN` as the server token if `--access-token` is not provided.
-- Use `NEXT_PUBLIC_ROLLBAR_PROJECT_ACCESS_CLIENT_TOKEN` as the client token (or fall back to the server token).
-- Use `ROLLBAR_CODE_VERSION` if set.
-- Auto-detect router type and enable deployment tracking, Session Replay, and source maps by default.
-
----
 
 ### What the Wizard Changes in Your Next.js App
 

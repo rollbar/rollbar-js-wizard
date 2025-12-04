@@ -8,15 +8,89 @@ type RollbarConfigOptions = {
   enableSourcemaps: boolean;
 };
 
+function resolveAccessTokenEnvVar({
+  isVercel,
+  overrideEnvVar,
+  defaultEnvVar,
+}: {
+  isVercel?: boolean;
+  overrideEnvVar?: string;
+  defaultEnvVar: string;
+}) {
+  return isVercel && overrideEnvVar ? overrideEnvVar : defaultEnvVar;
+}
+
+function buildReplayConfigSnippet(enableReplay: boolean) {
+  if (!enableReplay) {
+    return '';
+  }
+
+  return `
+  replay: {
+    enabled: true,
+    triggers: [
+      {
+        type: 'occurrence',
+        level: ['error', 'critical'],
+      },
+    ],
+  },`;
+}
+
+function buildClientCodeVersionLine(codeVersion?: string) {
+  if (codeVersion) {
+    return `
+      code_version: process.env.ROLLBAR_CODE_VERSION || '${codeVersion}',`;
+  }
+
+  return `
+      code_version: process.env.ROLLBAR_CODE_VERSION,`;
+}
+
+function buildClientSourcemapConfig(enableSourcemaps: boolean, codeVersion?: string) {
+  if (enableSourcemaps) {
+    return `
+    javascript: {
+      source_map_enabled: true,${buildClientCodeVersionLine(codeVersion)}
+    },`;
+  }
+
+  if (codeVersion) {
+    return `
+    javascript: {
+      code_version: process.env.ROLLBAR_CODE_VERSION || '${codeVersion}',
+    },`;
+  }
+
+  return '';
+}
+
+function getRollbarExamplePageRelativePath(options: {
+  appDirLocation?: string[];
+  pagesFolderLocation?: string[];
+}) {
+  if (options.appDirLocation) {
+    return options.appDirLocation.length === 1 ? '../..' : '../../..';
+  }
+
+  if (options.pagesFolderLocation) {
+    return options.pagesFolderLocation.length === 1 ? '..' : '../..';
+  }
+
+  return '../..';
+}
+
 export function getRollbarServerConfigContents(
   environment: string,
   codeVersion?: string,
   isVercel?: boolean,
   vercelServerTokenEnvVar?: string,
 ): string {
-  const accessTokenEnvVar = isVercel && vercelServerTokenEnvVar
-    ? vercelServerTokenEnvVar
-    : 'ROLLBAR_PROJECT_ACCESS_SERVER_TOKEN';
+  const accessTokenEnvVar = resolveAccessTokenEnvVar({
+    isVercel,
+    overrideEnvVar: vercelServerTokenEnvVar,
+    defaultEnvVar: 'ROLLBAR_PROJECT_ACCESS_SERVER_TOKEN',
+  });
   
   return `// This file configures the initialization of Rollbar on the server.
 // The config you add here will be used whenever the server handles a request.
@@ -58,9 +132,11 @@ export function getRollbarEdgeConfigContents(
   isVercel?: boolean,
   vercelServerTokenEnvVar?: string,
 ): string {
-  const accessTokenEnvVar = isVercel && vercelServerTokenEnvVar
-    ? vercelServerTokenEnvVar
-    : 'ROLLBAR_PROJECT_ACCESS_SERVER_TOKEN';
+  const accessTokenEnvVar = resolveAccessTokenEnvVar({
+    isVercel,
+    overrideEnvVar: vercelServerTokenEnvVar,
+    defaultEnvVar: 'ROLLBAR_PROJECT_ACCESS_SERVER_TOKEN',
+  });
   
   return `// This file configures the initialization of Rollbar for edge features (middleware, edge routes, etc.).
 // The config you add here will be used whenever one of the edge features is loaded.
@@ -101,41 +177,15 @@ export function getRollbarClientConfigContents(
   isVercel?: boolean,
   vercelClientTokenEnvVar?: string,
 ): string {
-  const accessTokenEnvVar = isVercel && vercelClientTokenEnvVar
-    ? vercelClientTokenEnvVar
-    : 'NEXT_PUBLIC_ROLLBAR_PROJECT_ACCESS_CLIENT_TOKEN';
-  const replayConfig = enableReplay
-    ? `
-  replay: {
-    enabled: true,
-    triggers: [
-      {
-        type: 'occurrence',
-        level: ['error', 'critical'],
-      },
-    ],
-  },`
-    : '';
+  const accessTokenEnvVar = resolveAccessTokenEnvVar({
+    isVercel,
+    overrideEnvVar: vercelClientTokenEnvVar,
+    defaultEnvVar: 'NEXT_PUBLIC_ROLLBAR_PROJECT_ACCESS_CLIENT_TOKEN',
+  });
+  const replayConfig = buildReplayConfigSnippet(enableReplay);
 
   const rollbarImport = enableReplay ? 'rollbar/replay' : 'rollbar';
-
-  const sourcemapConfig = enableSourcemaps
-    ? `
-    javascript: {
-      source_map_enabled: true,${
-        codeVersion
-          ? `
-      code_version: process.env.ROLLBAR_CODE_VERSION || '${codeVersion}',`
-          : `
-      code_version: process.env.ROLLBAR_CODE_VERSION,`
-      }
-    },`
-    : codeVersion
-      ? `
-    javascript: {
-      code_version: process.env.ROLLBAR_CODE_VERSION || '${codeVersion}',
-    },`
-      : '';
+  const sourcemapConfig = buildClientSourcemapConfig(enableSourcemaps, codeVersion);
 
   return `// This file configures the initialization of Rollbar on the client.
 // The config you add here will be used whenever a user loads a page in their browser.
@@ -668,21 +718,11 @@ export function getRollbarExamplePageContents(options: {
   appDirLocation?: string[];
   pagesFolderLocation?: string[];
 }): string {
-  // Calculate relative path based on location
-  // Example page paths:
-  // - app/rollbar-example-page/page.tsx -> ../../rollbar.client.config (2 levels up)
-  // - src/app/rollbar-example-page/page.tsx -> ../../../rollbar.client.config (3 levels up)
-  // - pages/rollbar-example-page.tsx -> ../rollbar.client.config (1 level up)
-  // - src/pages/rollbar-example-page.tsx -> ../../rollbar.client.config (2 levels up)
-  let relativePath = '../..'; // Default for app/rollbar-example-page/page.tsx
-  
-  if (options.appDirLocation) {
-    // App router: nested in rollbar-example-page subdirectory
-    relativePath = options.appDirLocation.length === 1 ? '../..' : '../../..';
-  } else if (options.pagesFolderLocation) {
-    // Pages router: directly in pages folder
-    relativePath = options.pagesFolderLocation.length === 1 ? '..' : '../..';
-  }
+  // Calculate relative path based on router location
+  const relativePath = getRollbarExamplePageRelativePath({
+    appDirLocation: options.appDirLocation,
+    pagesFolderLocation: options.pagesFolderLocation,
+  });
   return `${
     options.useClient ? '"use client";\n\n' : ''
   }import { useState } from 'react';

@@ -1,3 +1,7 @@
+> [!NOTE]
+> This repo has been archived.
+> For a wizard-like experience, ask your local AI agent! Just ask Claude/etc., "Help me set up rollbar.js in this application"
+
 ### `@rollbar/wizard` – Rollbar Next.js Setup Wizard
 
 Automated CLI wizard to add Rollbar to an existing Next.js application.  
